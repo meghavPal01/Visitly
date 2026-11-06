@@ -8,7 +8,6 @@ from app.database import get_db
 from app.models import Conversation, Lead, Message
 from app.schemas.common import Language
 from app.services import ai_service
-from app.services.handoff_service import create_handoff
 from app.services.llm import LLM, get_llm
 
 router = APIRouter(prefix="/api/buyer", tags=["chat"])

@@ -94,3 +94,19 @@ def buyer_reschedule(booking_id: int, body: RescheduleIn, sess: BuyerSession = D
                      db: Session = Depends(get_db)):
     b = _run(db, lambda: bs.reschedule_booking(db, booking_id, body.new_slot_id, lead_id=sess.lead_id))
     return booking_out(db, b)
+
+
+@router.post("/buyer/opt-out")
+def buyer_opt_out(sess: BuyerSession = Depends(buyer_session), db: Session = Depends(get_db)):
+    from app.services.notification_service import set_consent
+    set_consent(db, sess.lead_id, "opted_out")
+    db.commit()
+    return {"consent": "opted_out"}
+
+
+@router.post("/buyer/consent")
+def buyer_consent(sess: BuyerSession = Depends(buyer_session), db: Session = Depends(get_db)):
+    from app.services.notification_service import set_consent
+    set_consent(db, sess.lead_id, "granted")
+    db.commit()
+    return {"consent": "granted"}
