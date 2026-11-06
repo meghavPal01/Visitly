@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import { api } from '../lib/api'
 import { useFetch } from '../lib/hooks'
@@ -11,12 +11,19 @@ export default function VisitPicker({ projectId, existing, onClose, onDone }) {
   const days = useMemo(() => [...Array(7)].map((_, i) => ymd(new Date(Date.now() + i * 864e5))), [])
   const [day, setDay] = useState(days[0])
   const [sel, setSel] = useState(null)
+  const touched = useRef(false) // buyer picked a day themselves
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(null)
   const slots = useFetch(() => (pid ? api(`/api/public/slots?project_id=${pid}&day=${day}`, { kind: 'buyer' }) : Promise.resolve([])), [pid, day])
 
+  // Open on the first day that actually has free times (today is often already full or past).
+  useEffect(() => {
+    if (touched.current || slots.loading || slots.error || !slots.data || slots.data.length) return
+    const i = days.indexOf(day)
+    if (i >= 0 && i < days.length - 1) setDay(days[i + 1])
+  }, [slots.data, slots.loading, slots.error, day, days])
   useEffect(() => { const k = (e) => e.key === 'Escape' && onClose(); window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k) }, [onClose])
-  useEffect(() => { if (!pid && projects.data?.length === 1) setPid(projects.data[0].id) }, [projects.data, pid])
+  useEffect(() => { if (!pid && projects.data?.length) setPid(projects.data[0].id) }, [projects.data, pid])
 
   const run = async (fn) => {
     setBusy(true); setErr(null)
@@ -44,7 +51,7 @@ export default function VisitPicker({ projectId, existing, onClose, onDone }) {
         )}
         <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1" role="tablist" aria-label="Choose a day">
           {days.map((d) => { const iso = `${d}T12:00:00+05:30`; const on = d === day; const [wd, ...rest] = fmtDate(iso).split(',')
-            return <button key={d} role="tab" aria-selected={on} onClick={() => { setDay(d); setSel(null) }} className={`shrink-0 w-16 rounded-xl py-2 text-center border cursor-pointer ${on ? 'bg-pine text-paper border-pine' : 'border-line hover:border-pine'}`}>
+            return <button key={d} role="tab" aria-selected={on} onClick={() => { touched.current = true; setDay(d); setSel(null) }} className={`shrink-0 w-16 rounded-xl py-2 text-center border cursor-pointer ${on ? 'bg-pine text-paper border-pine' : 'border-line hover:border-pine'}`}>
               <span className="block text-xs">{wd}</span><span className="block font-display font-bold text-lg">{rest.join('').trim().split(' ')[0]}</span><span className="block text-xs">{rest.join('').trim().split(' ')[1]}</span></button> })}
         </div>
         <div className="mt-3 min-h-28" aria-live="polite">

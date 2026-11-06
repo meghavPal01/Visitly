@@ -80,7 +80,16 @@ def _run(db: Session, fn):
 @router.post("/buyer/bookings", status_code=201)
 def buyer_book(body: BookIn, sess: BuyerSession = Depends(buyer_session), db: Session = Depends(get_db)):
     b = _run(db, lambda: bs.book_slot(db, sess.lead_id, body.slot_id))
-    return booking_out(db, b)
+    out = booking_out(db, b)
+    # Same handoff as the AI path: a named executive gets the lead + conversation summary.
+    from app.models import Conversation, User
+    from app.services.handoff_service import create_handoff
+    from app.services.llm import get_llm
+    lead, conv = db.get(Lead, sess.lead_id), db.get(Conversation, sess.conversation_id)
+    h = create_handoff(db, lead, conv, "booking", get_llm(), note=f"Visit booked: {out['slot']['start_time']}")
+    exe = db.get(User, h.executive_id) if h.executive_id else None
+    out["executive"] = exe.name if exe else None
+    return out
 
 
 @router.post("/buyer/bookings/{booking_id}/cancel")

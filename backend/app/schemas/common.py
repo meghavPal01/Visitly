@@ -100,3 +100,24 @@ class SlotCreateIn(BaseModel):
 
 class SlotPatchIn(BaseModel):
     status: Literal["open", "blocked"]
+
+
+class MergeIn(BaseModel):
+    into_id: int
+
+
+class TaskIn(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    due_at: datetime
+
+
+class CallIn(BaseModel):
+    outcome: Literal["connected", "no_answer", "busy", "wrong_number", "callback_requested"]
+    duration_sec: int = Field(default=0, ge=0, le=7200)
+    notes: str | None = Field(default=None, max_length=2000)
+
+
+class PaymentIn(BaseModel):
+    unit_id: int
+    outcome: Literal["success", "failed", "pending"]
+    amount_inr: int = Field(default=50000, ge=1000, le=500000)

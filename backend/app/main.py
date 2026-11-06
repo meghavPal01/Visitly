@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 from contextlib import asynccontextmanager
 
-from app.api import auth, chat, insights, leads, projects, public
+from app.api import auth, chat, crm, insights, leads, projects, public
 from app.core.config import get_settings
 
 @asynccontextmanager
@@ -19,7 +19,7 @@ async def lifespan(_):
 app = FastAPI(title="Visitly API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=[get_settings().frontend_url], allow_credentials=False,
                    allow_methods=["*"], allow_headers=["*"])
-for r in (auth.router, public.router, chat.router, leads.router, projects.router, insights.router):
+for r in (auth.router, public.router, chat.router, leads.router, projects.router, insights.router, crm.router):
     app.include_router(r)
 
 

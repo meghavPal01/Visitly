@@ -75,7 +75,8 @@ def lead_detail(lead_id: int, user: User = Depends(require_staff), db: Session =
     acts = db.scalars(select(LeadActivity).where(LeadActivity.lead_id == lead.id)
                       .order_by(LeadActivity.id.desc()).limit(100))
     dup = db.get(Lead, lead.duplicate_of) if lead.duplicate_of else None
-    return {**lead_row(lead, db, full_phone=True), "consent": current_consent(db, lead.id),
+    from app.api.crm import lead_extras
+    return {**lead_row(lead, db, full_phone=True), **lead_extras(db, lead.id), "consent": current_consent(db, lead.id),
             "duplicate": {"id": dup.id, "name": dup.name, "source": dup.source} if dup else None,
             "messages": [{"id": m.id, "sender": m.sender, "content": m.content,
                           "created_at": m.created_at.isoformat()} for m in msgs],
