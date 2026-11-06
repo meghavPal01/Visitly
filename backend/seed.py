@@ -13,6 +13,8 @@ from sqlalchemy import select
 from app.core.phone import normalize_phone
 from app.core.security import hash_password
 from app.database import Base, SessionLocal, engine
+from app.services import booking_service as bs
+from app.services.handoff_service import create_handoff
 from app.models import (Booking, ConsentRecord, Conversation, FactSheet, Handoff, Lead, LeadActivity, Message,
                         MessageTemplate, Project, Reminder, SourceSpend, Unit, User, VisitSlot)
 
@@ -142,6 +144,26 @@ def main(reset: bool):
                 db.rollback()
                 raise
             n += 1
+
+    # A fully worked demo conversation: Gujarati buyer, grounded Q&A, booking, named handoff
+    meera = db.scalars(select(Lead).where(Lead.name == "Meera (Demo)")).first()
+    meera.project_id, meera.bhk, meera.budget_lakh, meera.language = projects[1].id, 3, 100, "gu"
+    conv = Conversation(lead_id=meera.id, language="gu", created_at=meera.created_at)
+    db.add(conv)
+    db.flush()
+    t0 = meera.created_at
+    for i, (who, text) in enumerate([
+        ("buyer", "નમસ્તે, મને 3 BHK જોઈએ છે. બજેટ લગભગ 1 કરોડ."),
+        ("ai", "નમસ્તે Meera! Demo Project B (Sample) માં 3 BHK ઉપલબ્ધ છે (સૂચક કિંમત ₹95 લાખથી ₹1.2 કરોડ). શું તમે સાઇટ વિઝિટ બુક કરવા માંગો છો?"),
+        ("buyer", "પઝેશન ક્યારે મળશે?"),
+        ("ai", "એ માહિતી હાલ મારી પાસે પ્રમાણિત નથી, તેથી અમારા સેલ્સ એક્ઝિક્યુટિવ તમને ચોક્કસ તારીખ જણાવશે."),
+    ]):
+        db.add(Message(conversation_id=conv.id, sender=who, content=text, created_at=t0 + timedelta(seconds=40 * i)))
+    meera.first_response_at = t0 + timedelta(seconds=40)
+    first_slot = db.scalars(select(VisitSlot).where(VisitSlot.project_id == projects[1].id, VisitSlot.start_time > now + timedelta(days=1)).order_by(VisitSlot.start_time)).first()
+    bs.book_slot(db, meera.id, first_slot.id, now=now)
+    create_handoff(db, meera, conv, "missing_fact", None, note="Asked for possession date; not in approved fact sheet")
+    db.commit()
     for src, amt in (("portal", 1_200_000), ("social", 900_000), ("website", 600_000), ("hoarding", 300_000)):
         db.add(SourceSpend(source=src, period_start=now - timedelta(days=60), period_end=now, amount_inr=amt))
     db.commit()

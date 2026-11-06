@@ -55,7 +55,7 @@ export default function Chat() {
   const changeLang = async (code) => { setLang(code); try { await api('/api/buyer/language', { method: 'POST', kind: 'buyer', body: { language: code } }) } catch { /* UI language still switches */ } }
   const booked = (b) => {
     setPicker(false); me.reload()
-    setMsgs((m) => [...m, { id: `pass-${Date.now()}-${b.id}`, sender: 'ai', content: b.status === 'confirmed' ? '' : 'Your visit has been cancelled. You can pick a new time whenever you like.', meta: b.status === 'confirmed' ? { booking: b } : null }])
+    setMsgs((m) => [...m, { id: `pass-${Date.now()}-${b.id}`, sender: 'ai', content: b.status === 'confirmed' ? '' : 'Your visit has been cancelled. You can pick a new time whenever you like.', meta: b.status === 'confirmed' ? { booking: b, handoff: b.executive ? { executive: b.executive } : null } : null }])
   }
   const stop = async () => { try { await api('/api/buyer/opt-out', { method: 'POST', kind: 'buyer' }); setOptedOut(true) } catch (e) { setFail({ message: e.message }) } }
 

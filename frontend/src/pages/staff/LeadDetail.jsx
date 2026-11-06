@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Copy, Phone, ShieldCheck, ShieldOff, UserRound } from 'lucide-react'
+import { ArrowLeft, Phone, ShieldCheck, ShieldOff, UserRound } from 'lucide-react'
 import { api } from '../../lib/api'
 import { useFetch } from '../../lib/hooks'
 import { useAuth } from '../../context/auth'
 import { fmtDateTime, sourceLabel, statusLabel } from '../../lib/format'
 import { Badge, Btn, Card, EmptyState, ErrorState, Select, Skeleton } from '../../components/ui'
 import { StatusBadge } from './Leads'
+import { CallsCard, MergeBanner, TasksCard, UnitsCard } from '../../components/CrmPanels'
 
 export default function LeadDetail() {
   const { id } = useParams()
@@ -39,10 +40,7 @@ export default function LeadDetail() {
       </div>
       {actErr && <ErrorState compact error={{ message: actErr }} />}
 
-      {l.duplicate && (
-        <p className="flex items-start gap-2 text-sm bg-marigold-soft rounded-lg p-3"><Copy className="size-4 mt-0.5 shrink-0" aria-hidden />
-          <span>This phone number matches an earlier lead: <Link to={`/app/leads/${l.duplicate.id}`} className="font-semibold underline">{l.duplicate.name}</Link> ({sourceLabel(l.duplicate.source)}). Check both before contacting so the buyer isn’t called twice. Leads are never merged automatically.</span></p>
-      )}
+      <MergeBanner lead={l} onDone={reload} />
 
       <div className="grid lg:grid-cols-[1.5fr_1fr] gap-5 items-start">
         <div className="flex flex-col gap-5">
@@ -71,6 +69,7 @@ export default function LeadDetail() {
               </ol>
             )}
           </Card>
+          <TasksCard lead={l} onDone={reload} />
         </div>
 
         <div className="flex flex-col gap-5">
@@ -82,6 +81,8 @@ export default function LeadDetail() {
             <h2 className="text-lg font-bold mb-2">Site visits</h2>
             {l.bookings.length === 0 ? <p className="text-sm text-moss">No visit booked yet.</p> : <ul className="flex flex-col gap-2">{l.bookings.map((b) => <li key={b.id} className="flex justify-between text-sm"><span>{fmtDateTime(b.start_time)}</span><Badge tone={b.status === 'confirmed' || b.status === 'completed' ? 'ok' : b.status === 'no_show' ? 'bad' : 'neutral'}>{b.status.replace('_', ' ')}</Badge></li>)}</ul>}
           </Card>
+          <CallsCard lead={l} onDone={reload} />
+          <UnitsCard lead={l} onDone={reload} />
           <Card className="p-5">
             <h2 className="text-lg font-bold mb-2">Activity</h2>
             <form className="flex gap-2 mb-4" onSubmit={(e) => { e.preventDefault(); if (note.trim()) act(async () => { await api(`/api/leads/${id}/notes`, { method: 'POST', body: { text: note } }); setNote('') }) }}>
