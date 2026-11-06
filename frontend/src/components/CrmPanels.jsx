@@ -80,9 +80,9 @@ export function CallsCard({ lead, onDone }) {
 const UTONE = { available: 'ok', held: 'warn', allotted: 'ink' }
 export function UnitsCard({ lead, onDone }) {
   const { user } = useAuth()
-  const { busy, err, act } = useAct(async () => { await units.reload(); await onDone() })
   const pid = lead.project_id
   const units = useFetch(() => (pid ? api(`/api/projects/${pid}/units`) : Promise.resolve([])), [pid])
+  const { busy, err, act } = useAct(async () => { await units.reload(); await onDone() })
   const [unit, setUnit] = useState('')
   const [outcome, setOutcome] = useState('success')
   const [amount, setAmount] = useState(50000)
