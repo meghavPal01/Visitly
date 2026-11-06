@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import require_admin, require_staff
 from app.core.phone import mask_phone
 from app.database import get_db
-from app.models import (Booking, CallLog, Conversation, Handoff, Lead, LeadActivity, Message, Role, User,
+from app.models import (Booking, Conversation, Handoff, Lead, LeadActivity, Message, Role, User,
                         VisitSlot)
 from app.schemas.common import AssignIn, NoteIn, StatusIn
 from app.services.lead_service import current_consent
