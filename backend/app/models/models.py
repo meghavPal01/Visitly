@@ -157,7 +157,7 @@ class Reminder(Base):
     __tablename__ = "reminders"
     id: Mapped[int] = mapped_column(primary_key=True)
     booking_id: Mapped[int] = mapped_column(ForeignKey("bookings.id"), index=True)
-    reminder_type: Mapped[str] = mapped_column(String(10))  # t_minus_24h | t_minus_2h
+    reminder_type: Mapped[str] = mapped_column(String(20))  # t_minus_24h | t_minus_2h
     scheduled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     status: Mapped[str] = mapped_column(String(20), default="pending")  # pending|sent|skipped|failed
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

@@ -254,7 +254,7 @@ def upgrade() -> None:
     op.create_table('reminders',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('booking_id', sa.Integer(), nullable=False),
-    sa.Column('reminder_type', sa.String(length=10), nullable=False),
+    sa.Column('reminder_type', sa.String(length=20), nullable=False),
     sa.Column('scheduled_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('status', sa.String(length=20), nullable=False),
     sa.Column('sent_at', sa.DateTime(timezone=True), nullable=True),
