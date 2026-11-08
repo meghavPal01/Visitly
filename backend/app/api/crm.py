@@ -8,6 +8,7 @@ from app.database import get_db
 from app.models import CallLog, FollowUpTask, Lead, Payment, Unit, User
 from app.schemas.common import CallIn, MergeIn, PaymentIn, TaskIn
 from app.services import crm_service as crm
+from app.services.audit import audit
 
 router = APIRouter(prefix="/api", tags=["crm"])
 
@@ -26,7 +27,11 @@ def _do(db: Session, fn):
 def merge(lead_id: int, body: MergeIn, user: User = Depends(require_staff), db: Session = Depends(get_db)):
     _get_lead(db, user, lead_id)
     _get_lead(db, user, body.into_id)  # must be allowed to see both
-    dst = _do(db, lambda: crm.merge_leads(db, lead_id, body.into_id, user))
+    def go():
+        r = crm.merge_leads(db, lead_id, body.into_id, user)
+        audit(db, user, "lead.merge", "lead", r.id, f"lead #{lead_id} merged into #{r.id}")
+        return r
+    dst = _do(db, go)
     return lead_row(dst, db)
 
 
@@ -74,13 +79,21 @@ def pay(lead_id: int, body: PaymentIn, user: User = Depends(require_staff), db: 
 
 @router.post("/units/{unit_id}/allot")
 def allot(unit_id: int, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
-    u = _do(db, lambda: crm.allot_unit(db, unit_id, admin))
+    def go():
+        r = crm.allot_unit(db, unit_id, admin)
+        audit(db, admin, "unit.allot", "unit", r.id, r.label)
+        return r
+    u = _do(db, go)
     return {"id": u.id, "status": u.status}
 
 
 @router.post("/units/{unit_id}/release")
 def release(unit_id: int, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
-    u = _do(db, lambda: crm.release_unit(db, unit_id, admin))
+    def go():
+        r = crm.release_unit(db, unit_id, admin)
+        audit(db, admin, "unit.release", "unit", r.id, r.label)
+        return r
+    u = _do(db, go)
     return {"id": u.id, "status": u.status}
 
 

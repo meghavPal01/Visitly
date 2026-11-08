@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     ai_model: str = ""
     frontend_url: str = "http://localhost:5173"
     environment: str = "development"
+    sentry_dsn: str = ""
 
     @model_validator(mode="after")
     def _normalise_and_guard(self):

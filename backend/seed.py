@@ -15,8 +15,8 @@ from app.core.security import hash_password
 from app.database import Base, SessionLocal, engine
 from app.services import booking_service as bs
 from app.services.handoff_service import create_handoff
-from app.models import (Booking, ConsentRecord, Conversation, FactSheet, Handoff, Lead, LeadActivity, Message,
-                        MessageTemplate, Project, Reminder, SourceSpend, Unit, User, VisitSlot)
+from app.models import (Booking, ConsentRecord, Conversation, FactSheet, Lead, LeadActivity, Message,
+                        MessageTemplate, Project, SourceSpend, Unit, User, VisitSlot)
 
 IST = ZoneInfo("Asia/Kolkata")
 DEMO_PASSWORD = os.environ.get("SEED_DEMO_PASSWORD", "Visitly@Demo1")
@@ -109,15 +109,15 @@ def main(reset: bool):
     for l in (base, dup):
         db.add(LeadActivity(lead_id=l.id, kind="status", detail=f"Lead created from {l.source}", created_at=l.created_at))
 
-    # Synthetic history (60 days) for the dashboard
+    # Synthetic history (180 days) for the dashboard
     weights = {"portal": 40, "social": 28, "website": 22, "hoarding": 10}
     show_rate = {"portal": .8, "social": .72, "website": .78, "hoarding": .6}
     book_rate = {"portal": .28, "social": .22, "website": .3, "hoarding": .15}
     past_slot_hour = iter(range(10**6))
     n = 0
-    for i in range(160):
+    for i in range(260):
         src = random.choices(list(weights), list(weights.values()))[0]
-        created = now - timedelta(days=random.uniform(3, 60), hours=random.uniform(0, 8))
+        created = now - timedelta(days=random.uniform(3, 178), hours=random.uniform(0, 8))
         phone = f"9{random.randint(100000000, 999999999)}"
         l = mk(f"Synthetic Lead {i + 1}", phone, src, created, lang=random.choice(["en", "en", "hi", "gu"]),
                consent=random.random() > .1, synthetic=True, project_id=random.choice(projects).id,
@@ -164,10 +164,10 @@ def main(reset: bool):
     bs.book_slot(db, meera.id, first_slot.id, now=now)
     create_handoff(db, meera, conv, "missing_fact", None, note="Asked for possession date; not in approved fact sheet")
     db.commit()
-    for src, amt in (("portal", 1_200_000), ("social", 900_000), ("website", 600_000), ("hoarding", 300_000)):
-        db.add(SourceSpend(source=src, period_start=now - timedelta(days=60), period_end=now, amount_inr=amt))
+    for src, amt in (("portal", 3_600_000), ("social", 2_700_000), ("website", 1_800_000), ("hoarding", 900_000)):
+        db.add(SourceSpend(source=src, period_start=now - timedelta(days=180), period_end=now, amount_inr=amt))
     db.commit()
-    print(f"Seeded: 4 users, 2 projects, {len(execs)} executives, 163 leads, {n} synthetic bookings.")
+    print(f"Seeded: {1 + len(execs)} users, 2 projects, 263 leads, {n} synthetic bookings.")
     print(f"Demo logins (password from SEED_DEMO_PASSWORD, default '{DEMO_PASSWORD}'): admin@visitly.demo, priya@visitly.demo")
 
 

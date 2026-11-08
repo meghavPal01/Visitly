@@ -262,3 +262,15 @@ class SourceSpend(Base):
     period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     amount_inr: Mapped[int] = mapped_column(Integer)
     is_synthetic: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class AuditLog(Base):
+    """Who changed what. Append-only; written by admin-sensitive actions."""
+    __tablename__ = "audit_logs"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    actor_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), index=True)
+    action: Mapped[str] = mapped_column(String(40), index=True)
+    entity: Mapped[str] = mapped_column(String(30))
+    entity_id: Mapped[int | None] = mapped_column(Integer)
+    detail: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)

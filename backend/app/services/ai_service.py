@@ -254,6 +254,9 @@ def handle_message(db: Session, lead_id: int, conv_id: int, text: str, llm: LLM 
         conv.language = lead.language = lang
     buyer_msg = _store(db, conv_id, "buyer", text)
 
+    if conv.status == "human_active":  # an executive has taken over: the assistant stays silent
+        return [buyer_msg]
+
     if wants_human(text):  # deterministic path: never depends on the model
         h = create_handoff(db, lead, conv, "buyer_request", llm, note=text[:200])
         exe = db.get(User, h.executive_id) if h.executive_id else None

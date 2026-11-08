@@ -11,3 +11,4 @@ pyjwt==2.*
 anthropic
 httpx
 pytest==8.*
+sentry-sdk==2.*

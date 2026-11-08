@@ -29,7 +29,7 @@ def _spend_in_window(db: Session, source: str, start: datetime, end: datetime) -
     return total
 
 
-def compute(db: Session, days: int = 60, now: datetime | None = None) -> dict:
+def compute(db: Session, days: int = 60, now: datetime | None = None, compare: bool = True) -> dict:
     now = now or datetime.now(timezone.utc)
     start = now - timedelta(days=days)
     leads = list(db.scalars(select(Lead).where(Lead.created_at >= start, Lead.created_at <= now, Lead.merged_into.is_(None))))
@@ -65,7 +65,12 @@ def compute(db: Session, days: int = 60, now: datetime | None = None) -> dict:
         monday = d - timedelta(days=d.weekday())
         weeks[monday.isoformat()] = weeks.get(monday.isoformat(), 0) + 1
 
-    return {"window_days": days, "generated_at": now.isoformat(), "is_synthetic_data": any(l.is_synthetic for l in leads),
+    prev = None
+    if compare:
+        pt = compute(db, days, now - timedelta(days=days), compare=False)["totals"]
+        prev = {k: pt[k] for k in ("leads", "visits_booked", "booking_rate", "show_up_rate", "avg_first_response_seconds",
+                                    "within_sla_pct", "cost_per_visit")}
+    return {"previous_totals": prev, "window_days": days, "generated_at": now.isoformat(), "is_synthetic_data": any(l.is_synthetic for l in leads),
             "totals": {**total, "avg_first_response_seconds": round(sum(deltas) / len(deltas)) if deltas else None,
                        "median_first_response_seconds": round(median(deltas)) if deltas else None,
                        "within_sla_pct": round(sum(1 for d in deltas if d <= SLA_SECONDS) / len(deltas), 4) if deltas else None,

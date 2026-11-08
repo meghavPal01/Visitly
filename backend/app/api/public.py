@@ -31,8 +31,16 @@ def booking_out(db: Session, b: Booking) -> dict:
 
 @router.get("/public/projects")
 def public_projects(db: Session = Depends(get_db)):
-    return [{"id": p.id, "name": p.name, "location": p.location, "rera_number": p.rera_number,
-             "is_demo_data": p.is_demo_data} for p in db.scalars(select(Project).order_by(Project.id))]
+    from app.api.projects import latest_fact_sheet
+    out = []
+    for p in db.scalars(select(Project).order_by(Project.id)):
+        fs = latest_fact_sheet(db, p.id)
+        c = (fs.content if fs else None) or {}
+        out.append({"id": p.id, "name": p.name, "location": p.location, "rera_number": p.rera_number,
+                    "map_url": p.map_url, "is_demo_data": p.is_demo_data, "overview": c.get("overview"),
+                    "possession": c.get("possession"), "amenities": (c.get("amenities") or [])[:6],
+                    "bhk_options": c.get("bhk_options") or []})
+    return out
 
 
 @router.post("/public/enquiry", status_code=201)
@@ -60,7 +68,11 @@ def buyer_me(sess: BuyerSession = Depends(buyer_session), db: Session = Depends(
     now = datetime.now(timezone.utc)
     upcoming = db.scalars(select(Booking).join(VisitSlot, VisitSlot.id == Booking.slot_id).where(
         Booking.lead_id == lead.id, Booking.status == "confirmed", VisitSlot.start_time > now)).first()
-    return {"lead": {"id": lead.id, "name": lead.name, "language": lead.language, "project_id": lead.project_id,
+    from app.models import Conversation, User
+    conv = db.get(Conversation, sess.conversation_id)
+    human = db.get(User, conv.assigned_to) if conv and conv.status == "human_active" and conv.assigned_to else None
+    return {"conversation": {"status": conv.status if conv else None, "executive": human.name if human else None},
+            "lead": {"id": lead.id, "name": lead.name, "language": lead.language, "project_id": lead.project_id,
                      "budget_lakh": float(lead.budget_lakh) if lead.budget_lakh else None, "bhk": lead.bhk},
             "consent": current_consent(db, lead.id),
             "upcoming_booking": booking_out(db, upcoming) if upcoming else None}

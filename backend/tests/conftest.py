@@ -24,6 +24,13 @@ def _schema():
     yield
 
 
+@pytest.fixture(autouse=True)
+def _reset_ratelimit():
+    from app.core import ratelimit
+    ratelimit.reset()
+    yield
+
+
 @pytest.fixture()
 def db():
     s = TestSession()

@@ -1,4 +1,5 @@
-from datetime import datetime
+import re
+from datetime import date, datetime
 from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
@@ -121,3 +122,23 @@ class PaymentIn(BaseModel):
     unit_id: int
     outcome: Literal["success", "failed", "pending"]
     amount_inr: int = Field(default=50000, ge=1000, le=500000)
+
+
+class ReplyIn(BaseModel):
+    text: str = Field(min_length=1, max_length=1000)
+
+
+class SlotBulkIn(BaseModel):
+    project_id: int
+    start_date: date
+    days: int = Field(ge=1, le=30)
+    times: list[str] = Field(min_length=1, max_length=12)
+    duration_minutes: int = Field(default=60, ge=15, le=240)
+
+    @field_validator("times")
+    @classmethod
+    def _times(cls, v):
+        for t in v:
+            if not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", t):
+                raise ValueError("times must look like 10:00 or 14:30")
+        return sorted(set(v))
