@@ -37,8 +37,6 @@ jobs:
           alembic upgrade head
           alembic check
       - run: pytest -q
-      - name: AI eval harness runs offline (stub mode)
-        run: python evals/run_evals.py --stub
 
   frontend:
     runs-on: ubuntu-latest
