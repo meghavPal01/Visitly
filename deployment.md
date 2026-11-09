@@ -1,6 +1,6 @@
 # Visitly: deployment guide
 
-Repository: **<PASTE GITHUB URL>**  ·  Live app: **<PASTE LIVE URL, if deployed>**
+Repository: https://github.com/meghavPal01/Visitly
 
 Visitly is a React (Vite) frontend, a FastAPI backend and PostgreSQL. All data in the demo is synthetic.
 
