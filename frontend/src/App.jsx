@@ -8,6 +8,8 @@ import LeadDetail from './pages/staff/LeadDetail'
 import FactSheet from './pages/staff/FactSheet'
 import Slots from './pages/staff/Slots'
 import Comms from './pages/staff/Comms'
+import InboxPage from './pages/staff/Inbox'
+import Audit from './pages/staff/Audit'
 import Enquire from './pages/buyer/Enquire'
 import Chat from './pages/buyer/Chat'
 
@@ -34,6 +36,8 @@ export default function App() {
           <Route path="project" element={<AdminOnly><FactSheet /></AdminOnly>} />
           <Route path="slots" element={<Slots />} />
           <Route path="comms" element={<Comms />} />
+          <Route path="inbox" element={<InboxPage />} />
+          <Route path="audit" element={<AdminOnly><Audit /></AdminOnly>} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

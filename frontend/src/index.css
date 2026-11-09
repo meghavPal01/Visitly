@@ -5,18 +5,31 @@
   --color-paper: #fbfcfb;
   --color-pine: #0e2f2b;
   --color-pine-2: #1d4a44;
-  --color-moss: #5b7770;
+  --color-moss: #4a6660;
   --color-line: #c9d3cf;
   --color-marigold: #f4b400;
   --color-marigold-soft: #fdf0c4;
   --color-brick: #b3342b;
   --color-brick-soft: #f7dedb;
-  --color-ok: #1f7a4d;
+  --color-ok: #1a6b43;
   --color-ok-soft: #d9efe3;
+  --color-ok-inv: #72d9a3;       /* status colours for the inverted (bg-pine) KPI tile */
+  --color-brick-inv: #ff9188;
+  --color-note-inv: #f4b400;
+  --color-ink: #0e2f2b;          /* text on marigold, same in both themes */
+  --color-chrome: #0e2f2b;       /* sidebar / headers, dark in both themes */
+  --color-chrome-2: #1d4a44;
+  --color-on-chrome: #fbfcfb;
   --font-display: "Bricolage Grotesque", "Noto Sans", system-ui, sans-serif;
   --font-sans: "Noto Sans", "Noto Sans Devanagari", "Noto Sans Gujarati", system-ui, sans-serif;
 }
 
+:root[data-theme="dark"] {
+  --color-plaster: #0c1a17; --color-paper: #13241f; --color-pine: #e7f0ed; --color-pine-2: #c4d8d2; --color-moss: #93ada5;
+  --color-line: #2b443e; --color-marigold-soft: #3b3411; --color-brick: #ff9188; --color-brick-soft: #3d1f1c;
+  --color-ok: #72d9a3; --color-ok-inv: #1a6b43; --color-brick-inv: #b3342b; --color-note-inv: #7a5800; --color-ok-soft: #17382a; --color-chrome: #08211e; --color-chrome-2: #17413b;
+  color-scheme: dark;
+}
 html { background: var(--color-plaster); color: var(--color-pine); font-family: var(--font-sans); }
 body { margin: 0; min-height: 100dvh; -webkit-font-smoothing: antialiased; }
 h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0.01em; }
@@ -25,7 +38,7 @@ button, a, input, select, textarea { font: inherit; }
 ::selection { background: var(--color-marigold); color: var(--color-pine); }
 
 @keyframes shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
-.skeleton { background: linear-gradient(90deg, #dfe6e3 25%, #edf1ef 50%, #dfe6e3 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 8px; }
+.skeleton { background: linear-gradient(90deg, var(--color-line) 25%, var(--color-plaster) 50%, var(--color-line) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 8px; }
 @keyframes pass-in { from { opacity: 0; transform: translateY(10px) scale(.98) } to { opacity: 1; transform: none } }
 .pass-in { animation: pass-in .45s cubic-bezier(.2,.8,.2,1) both; }
 @media (prefers-reduced-motion: reduce) { .skeleton, .pass-in { animation: none } * { scroll-behavior: auto !important } }

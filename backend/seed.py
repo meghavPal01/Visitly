@@ -85,10 +85,12 @@ def main(reset: bool):
         db.add(MessageTemplate(key=key, language=lang, kind=kind, body=body))
     db.flush()
 
+    used_starts = set()
     # Future slots: next 7 days, 4 per day per project
     for p in projects:
         for d in range(1, 8):
             for h in (10, 11, 14, 16):
+                used_starts.add((p.id, ist(today + timedelta(days=d), h)))
                 db.add(VisitSlot(project_id=p.id, start_time=ist(today + timedelta(days=d), h),
                                  end_time=ist(today + timedelta(days=d), h) + timedelta(hours=1)))
 
@@ -113,7 +115,6 @@ def main(reset: bool):
     weights = {"portal": 40, "social": 28, "website": 22, "hoarding": 10}
     show_rate = {"portal": .8, "social": .72, "website": .78, "hoarding": .6}
     book_rate = {"portal": .28, "social": .22, "website": .3, "hoarding": .15}
-    past_slot_hour = iter(range(10**6))
     n = 0
     for i in range(260):
         src = random.choices(list(weights), list(weights.values()))[0]
@@ -127,7 +128,9 @@ def main(reset: bool):
         if random.random() < book_rate[src]:
             p = projects[l.project_id - projects[0].id]
             start = (created + timedelta(days=random.randint(1, 4))).replace(minute=0, second=0, microsecond=0)
-            start += timedelta(minutes=next(past_slot_hour) % 2)  # unique start per project
+            while (p.id, start) in used_starts:  # unique start per project (DB constraint); bump by a minute until free
+                start += timedelta(minutes=1)
+            used_starts.add((p.id, start))
             slot = VisitSlot(project_id=p.id, start_time=start, end_time=start + timedelta(hours=1))
             db.add(slot)
             db.flush()

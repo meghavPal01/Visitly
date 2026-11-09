@@ -8,6 +8,27 @@ import Logo from '../../components/Logo'
 
 const SOURCES = ['portal', 'social', 'website', 'hoarding']
 
+const range = (o) => `₹${o.indicative_price_lakh_min}–${o.indicative_price_lakh_max} lakh`
+
+function ProjectCard({ p, onPick, picked }) {
+  return (
+    <article className={`rounded-xl border bg-paper p-4 ${picked ? 'border-pine' : 'border-line'}`}>
+      <div className="flex items-start justify-between gap-2">
+        <div><h3 className="font-display font-bold text-lg">{p.name}</h3><p className="text-sm text-moss">{p.location}</p></div>
+        {p.is_demo_data && <span className="text-[11px] rounded-full bg-marigold-soft px-2 py-0.5 font-medium shrink-0">Sample data</span>}
+      </div>
+      {p.overview && <p className="text-sm mt-2">{p.overview}</p>}
+      {p.bhk_options.length > 0 && <ul className="mt-2 flex flex-wrap gap-1.5">{p.bhk_options.map((o) => <li key={o.bhk} className="text-xs rounded-md bg-plaster border border-line px-2 py-1"><strong>{o.bhk} BHK</strong> · {o.carpet_sqft} sq ft · {range(o)}</li>)}</ul>}
+      {p.amenities.length > 0 && <p className="text-xs text-moss mt-2">{p.amenities.join(' · ')}</p>}
+      <p className="text-xs text-moss mt-2">RERA {p.rera_number || 'to be confirmed'} · Possession: {p.possession || 'to be confirmed'}</p>
+      <div className="flex gap-3 mt-3 items-center">
+        <button type="button" onClick={onPick} aria-pressed={picked} className="min-h-10 rounded-lg border border-pine px-3 text-sm font-medium cursor-pointer hover:bg-marigold-soft">{picked ? 'Selected' : 'Enquire about this'}</button>
+        {p.map_url && <a href={p.map_url} target="_blank" rel="noreferrer noopener" className="text-sm underline underline-offset-4">View on map</a>}
+      </div>
+    </article>
+  )
+}
+
 export default function Enquire() {
   const nav = useNavigate()
   const [sp] = useSearchParams()
@@ -35,10 +56,9 @@ export default function Enquire() {
         <div className="md:pt-6">
           <h1 className="text-4xl md:text-6xl font-bold leading-[1.02]">See your next home in person.</h1>
           <p className="text-lg mt-4 max-w-md text-pine-2">Tell us what you’re looking for. Our assistant answers in English, Hindi or Gujarati and books a site visit at a time that’s actually free.</p>
-          <div className="mt-8 hidden md:flex flex-col gap-3">
-            {projects.data?.map((p) => (
-              <div key={p.id} className="border-l-4 border-marigold pl-4"><p className="font-display font-bold text-lg">{p.name}</p><p className="text-sm text-moss">{p.location} · RERA {p.rera_number || 'to be confirmed'}</p></div>
-            ))}
+          <div className="mt-8 flex flex-col gap-3" aria-label="Our projects">
+            {projects.loading && <div className="h-24 rounded-xl bg-line/60 animate-pulse" />}
+            {projects.data?.map((p) => <ProjectCard key={p.id} p={p} onPick={() => setF((x) => ({ ...x, project_id: String(p.id) }))} picked={f.project_id === String(p.id)} />)}
           </div>
         </div>
         <form onSubmit={submit} noValidate className="bg-paper border border-line rounded-2xl p-5 md:p-7 flex flex-col gap-4 shadow-[0_1px_0_#c9d3cf]">

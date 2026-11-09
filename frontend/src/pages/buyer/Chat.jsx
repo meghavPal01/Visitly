@@ -6,6 +6,7 @@ import { useFetch } from '../../lib/hooks'
 import { LANGS, T } from '../../lib/i18n'
 import { fmtDateTime } from '../../lib/format'
 import { Btn, ErrorState, Skeleton } from '../../components/ui'
+import ThemeToggle from '../../components/ThemeToggle'
 import Logo from '../../components/Logo'
 import SitePass from '../../components/SitePass'
 import VisitPicker from '../../components/VisitPicker'
@@ -24,11 +25,26 @@ export default function Chat() {
   const [fail, setFail] = useState(null)
   const [picker, setPicker] = useState(false)
   const [optedOut, setOptedOut] = useState(false)
+  const [conv, setConv] = useState(null)
   const end = useRef(null)
   const t = T[lang]
 
   useEffect(() => { if (hist.data) setMsgs(hist.data) }, [hist.data])
-  useEffect(() => { if (me.data?.lead.language) setLang(me.data.lead.language); if (me.data?.consent === 'opted_out') setOptedOut(true) }, [me.data])
+  // Poll for replies from a salesperson. Only messages with ids we don't have are appended, so nothing duplicates or reorders.
+  useEffect(() => {
+    if (!sess) return undefined
+    const tick = async () => {
+      if (document.hidden) return
+      try {
+        const [rows, m] = await Promise.all([api('/api/buyer/messages', { kind: 'buyer' }), api('/api/buyer/me', { kind: 'buyer' })])
+        setMsgs((cur) => { const have = new Set(cur.map((x) => x.id)); const add = rows.filter((r) => !have.has(r.id)); return add.length ? [...cur.filter((x) => !String(x.id).startsWith('tmp-')), ...add] : cur })
+        setConv(m.conversation)
+      } catch { /* next tick retries */ }
+    }
+    const id = setInterval(tick, 8000)
+    return () => clearInterval(id)
+  }, [sess])
+  useEffect(() => { if (me.data?.lead.language) setLang(me.data.lead.language); if (me.data?.consent === 'opted_out') setOptedOut(true); if (me.data?.conversation) setConv(me.data.conversation) }, [me.data])
   useEffect(() => { end.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'end' }) }, [msgs, sending])
   useEffect(() => { if (me.error?.status === 401 || hist.error?.status === 401) { session.clear('buyer'); nav('/') } }, [me.error, hist.error, nav])
 
@@ -43,7 +59,7 @@ export default function Chat() {
     const l = scriptLang(body); if (l) setLang(l)
     try {
       const res = await api('/api/buyer/messages', { method: 'POST', kind: 'buyer', body: { text: body } })
-      setMsgs((m) => [...m.filter((x) => x.id !== tmp.id), ...res])
+      setMsgs((m) => { const have = new Set(m.map((x) => x.id)); return [...m.filter((x) => x.id !== tmp.id), ...res.filter((r) => !have.has(r.id))] })
       if (res.some((r) => r.meta?.booking || r.meta?.handoff)) me.reload()
     } catch (e) { setMsgs((m) => m.filter((x) => x.id !== tmp.id)); setFail({ message: e.message, body }) } finally { setSending(false) }
   }
@@ -63,11 +79,12 @@ export default function Chat() {
   const empty = hist.data && msgs.length === 0
   return (
     <div className="h-dvh flex flex-col max-w-2xl mx-auto bg-plaster sm:border-x border-line">
-      <header className="bg-pine text-paper px-4 py-3 flex items-center gap-3 shrink-0">
+      <header className="bg-chrome text-on-chrome px-4 py-3 flex items-center gap-3 shrink-0">
         <Logo light className="!text-lg" />
         <div className="ml-auto flex items-center gap-1" role="group" aria-label="Language">
-          {LANGS.map((l) => <button key={l.code} onClick={() => changeLang(l.code)} aria-pressed={lang === l.code} className={`rounded-full px-2.5 min-h-8 text-xs font-medium cursor-pointer ${lang === l.code ? 'bg-marigold text-pine' : 'text-paper/80 hover:bg-pine-2'}`}>{l.label}</button>)}
-          <button onClick={() => { session.clear('buyer'); nav('/') }} aria-label="Leave chat" className="p-2 text-paper/70 hover:text-marigold cursor-pointer"><LogOut className="size-4" /></button>
+          {LANGS.map((l) => <button key={l.code} onClick={() => changeLang(l.code)} aria-pressed={lang === l.code} className={`rounded-full px-2.5 min-h-8 text-xs font-medium cursor-pointer ${lang === l.code ? 'bg-marigold text-ink' : 'text-on-chrome/80 hover:bg-chrome-2'}`}>{l.label}</button>)}
+          <ThemeToggle />
+          <button onClick={() => { session.clear('buyer'); nav('/') }} aria-label="Leave chat" className="p-2 text-on-chrome/70 hover:text-marigold cursor-pointer"><LogOut className="size-4" /></button>
         </div>
       </header>
 
@@ -76,6 +93,9 @@ export default function Chat() {
           <span><strong>{t.next}:</strong> {fmtDateTime(up.slot.start_time)}</span><span className="underline underline-offset-4 font-medium">Change</span>
         </button>
       )}
+
+      {conv?.status === 'human_active' && conv.executive && <p role="status" className="shrink-0 bg-ok-soft text-ok px-4 py-2 text-sm font-medium flex items-center gap-2 border-b border-line"><UserRound className="size-4" aria-hidden />{t.chatting(conv.executive)}</p>}
+      {conv?.status === 'human_requested' && <p role="status" className="shrink-0 bg-marigold-soft px-4 py-2 text-sm border-b border-line">{t.waiting}</p>}
 
       <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3" aria-live="polite" aria-relevant="additions">
         {(me.loading || hist.loading) && <><Skeleton className="h-12 w-3/4" /><Skeleton className="h-12 w-2/3 self-end" /></>}
@@ -88,13 +108,15 @@ export default function Chat() {
         )}
         {msgs.map((m) => (
           <div key={m.id} className={`flex flex-col gap-2 ${m.sender === 'buyer' ? 'items-end' : 'items-start'}`}>
-            {m.content && <Bubble who={m.sender}>{m.content}</Bubble>}
+            {m.content && <Bubble who={m.sender} label={m.sender === 'executive' ? (conv?.executive || t.teamMember) : null}>{m.content}</Bubble>}
             {m.meta?.booking && <SitePass booking={m.meta.booking}>{m.meta.handoff?.executive && <p className="text-xs mt-2 font-medium">Your contact: {m.meta.handoff.executive}</p>}</SitePass>}
             {!m.meta?.booking && m.meta?.handoff?.executive && <span className="inline-flex items-center gap-1.5 text-xs bg-paper border border-line rounded-full px-3 py-1"><UserRound className="size-3.5" aria-hidden />{m.meta.handoff.executive} will contact you</span>}
           </div>
         ))}
         {sending && <div className="self-start bg-paper border border-line rounded-2xl rounded-bl-md px-4 py-3 flex gap-1" role="status" aria-label={t.typing}>{[0, 1, 2].map((i) => <span key={i} className="size-2 rounded-full bg-moss animate-pulse" style={{ animationDelay: `${i * 150}ms` }} />)}</div>}
         {fail && <ErrorState compact error={fail} onRetry={fail.body ? () => send(fail.body) : undefined} />}
+        {!empty && !sending && msgs.length > 0 && conv?.status !== 'human_active' && !msgs.some((m) => m.sender === 'buyer' && m.id?.toString().startsWith('tmp-')) && (
+          <div className="flex flex-wrap gap-2" aria-label="Suggested questions">{(up ? t.chipsBooked : t.chipsOpen).map((c) => <button key={c} onClick={() => send(c)} className="rounded-full border border-pine/40 bg-paper px-3.5 min-h-10 text-sm hover:bg-marigold-soft cursor-pointer">{c}</button>)}</div>)}
         <div ref={end} />
       </div>
 
@@ -117,7 +139,13 @@ export default function Chat() {
   )
 }
 
-function Bubble({ who, children }) {
+function Bubble({ who, label, children }) {
   const buyer = who === 'buyer'
-  return <p className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed ${buyer ? 'bg-pine text-paper rounded-br-md' : 'bg-paper border border-line rounded-bl-md'}`}>{children}</p>
+  const staff = who === 'executive'
+  return (
+    <div className={`max-w-[85%] flex flex-col ${buyer ? 'items-end' : 'items-start'}`}>
+      {label && <span className="text-xs font-semibold text-moss mb-1 px-1">{label}</span>}
+      <p className={`whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed ${buyer ? 'bg-pine text-paper rounded-br-md' : staff ? 'bg-marigold-soft border border-marigold rounded-bl-md' : 'bg-paper border border-line rounded-bl-md'}`}>{children}</p>
+    </div>
+  )
 }

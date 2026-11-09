@@ -16,7 +16,7 @@ export default function SitePass({ booking, children }) {
           <p className="flex items-start gap-2"><MapPin className="size-5 text-moss shrink-0 mt-0.5" aria-hidden /><span>{s.location}{s.map_url && <> · <a href={s.map_url} target="_blank" rel="noreferrer" className="underline underline-offset-4 font-medium">Open map</a></>}</span></p>
         </div>
       </div>
-      <div className="pass-stub bg-marigold rounded-b-[16px] px-5 py-4 text-pine">
+      <div className="pass-stub bg-marigold rounded-b-[16px] px-5 py-4 text-ink">
         <div className="flex items-baseline justify-between gap-3"><span className="font-display font-bold text-lg">Pass #{booking.id}</span><span className="text-xs">RERA {booking.rera_number || 'to be confirmed'}</span></div>
         <p className="text-xs mt-1">Show this at the site gate. We’ll remind you 24 hours and 2 hours before (demo: reminders are simulated).</p>
         {children}

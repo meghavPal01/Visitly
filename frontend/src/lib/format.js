@@ -14,3 +14,14 @@ export function duration(sec) {
 export const ymd = (d) => { const p = new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(d); return p }
 export const statusLabel = (s) => ({ new: 'New', contacted: 'Contacted', visit_booked: 'Visit booked', visited: 'Visited', negotiation: 'Negotiation', won: 'Won', lost: 'Lost' }[s] || s)
 export const sourceLabel = (s) => ({ portal: 'Property portal', social: 'Social media', website: 'Website', hoarding: 'Hoarding' }[s] || s)
+
+/** Change versus the previous period. kind 'ratio' compares fractions in percentage points; others compare relatively. */
+export function delta(cur, prev, { lowerIsBetter = false, kind = 'count' } = {}) {
+  if (cur == null || prev == null) return null
+  let diff, label
+  if (kind === 'ratio') { diff = (cur - prev) * 100; label = `${Math.abs(Math.round(diff))} pts` }
+  else { if (prev === 0) return null; diff = ((cur - prev) / prev) * 100; label = `${Math.abs(Math.round(diff))}%` }
+  if (Math.round(Math.abs(diff)) === 0) return { dir: 'flat', label: 'no change', good: null }
+  const up = diff > 0
+  return { dir: up ? 'up' : 'down', label, good: lowerIsBetter ? !up : up }
+}

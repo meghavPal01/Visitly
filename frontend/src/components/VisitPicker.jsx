@@ -59,7 +59,7 @@ export default function VisitPicker({ projectId, existing, onClose, onDone }) {
             : slots.loading ? <div className="grid grid-cols-3 gap-2">{[...Array(6)].map((_, i) => <Skeleton key={i} className="h-11" />)}</div>
             : slots.error ? <ErrorState compact error={slots.error} onRetry={slots.reload} />
             : slots.data.length === 0 ? <EmptyState title="No free times this day" body="Pick another day. New times appear as the sales team opens them." />
-            : <div className="grid grid-cols-3 gap-2">{slots.data.map((s) => <button key={s.id} aria-pressed={sel === s.id} onClick={() => setSel(s.id)} className={`min-h-11 rounded-lg border text-sm font-semibold cursor-pointer ${sel === s.id ? 'bg-marigold border-marigold' : 'border-line hover:border-pine'}`}>{fmtTime(s.start_time)}</button>)}</div>}
+            : <div className="grid grid-cols-3 gap-2">{slots.data.map((s) => <button key={s.id} aria-pressed={sel === s.id} onClick={() => setSel(s.id)} className={`min-h-11 rounded-lg border text-sm font-semibold cursor-pointer ${sel === s.id ? 'bg-marigold border-marigold text-ink' : 'border-line hover:border-pine'}`}>{fmtTime(s.start_time)}</button>)}</div>}
         </div>
         {err && <p role="alert" className="text-sm text-brick bg-brick-soft rounded-lg p-3 mt-3">{err}</p>}
         <div className="flex flex-col gap-2 mt-4">

@@ -1,8 +1,9 @@
+import { forwardRef } from 'react'
 import { AlertTriangle, Inbox, Loader2 } from 'lucide-react'
 
 const BTN = {
   primary: 'bg-pine text-paper hover:bg-pine-2 disabled:bg-moss/60',
-  accent: 'bg-marigold text-pine hover:brightness-95 disabled:opacity-60',
+  accent: 'bg-marigold text-ink hover:brightness-95 disabled:opacity-60',
   ghost: 'bg-transparent text-pine border border-line hover:border-pine hover:bg-paper disabled:opacity-50',
   danger: 'bg-brick-soft text-brick hover:bg-brick hover:text-paper disabled:opacity-50',
 }
@@ -62,5 +63,5 @@ export function Field({ label, hint, error, children, htmlFor }) {
   )
 }
 export const inputCls = 'w-full min-h-11 rounded-lg border border-line bg-paper px-3 text-base placeholder:text-moss/70 focus:border-pine'
-export const Input = (p) => <input {...p} className={`${inputCls} ${p.className || ''}`} />
+export const Input = forwardRef(function Input(p, ref) { return <input ref={ref} {...p} className={`${inputCls} ${p.className || ''}`} /> })
 export const Select = ({ children, ...p }) => <select {...p} className={`${inputCls} ${p.className || ''}`}>{children}</select>

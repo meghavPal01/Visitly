@@ -3,6 +3,7 @@ import { Plus, Trash2 } from 'lucide-react'
 import { api } from '../../lib/api'
 import { useFetch } from '../../lib/hooks'
 import { Btn, Card, ErrorState, Field, Input, Select, Skeleton } from '../../components/ui'
+import { useToast } from '../../components/Toast'
 
 const TA = 'w-full rounded-lg border border-line bg-paper px-3 py-2 text-base focus:border-pine'
 const lines = (s) => s.split('\n').map((x) => x.trim()).filter(Boolean)
@@ -15,6 +16,7 @@ export default function FactSheet() {
   const [f, setF] = useState(null)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState(null)
+  const { toast } = useToast()
 
   useEffect(() => {
     if (!fs.data) return
@@ -34,7 +36,7 @@ export default function FactSheet() {
         content: { overview: f.overview, possession: f.possession || null, amenities: lines(f.amenities), location_highlights: lines(f.location_highlights),
           bhk_options: f.bhk_options.map((b) => ({ bhk: Number(b.bhk), carpet_sqft: num(b.carpet_sqft), indicative_price_lakh_min: num(b.indicative_price_lakh_min), indicative_price_lakh_max: num(b.indicative_price_lakh_max) })),
           faqs: f.faqs.filter((x) => x.q.trim() && x.a.trim()) } } })
-      setMsg({ ok: true, text: `Saved as version ${r.version}. The assistant uses it immediately.` }); fs.reload()
+      setMsg({ ok: true, text: `Saved as version ${r.version}. The assistant uses it immediately.` }); toast(`Project facts saved (version ${r.version})`); fs.reload()
     } catch (e) { setMsg({ ok: false, text: e.message }) } finally { setSaving(false) }
   }
 

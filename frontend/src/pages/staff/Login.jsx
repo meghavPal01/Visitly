@@ -16,20 +16,20 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [err, setErr] = useState(null)
   const [busy, setBusy] = useState(false)
-  if (user) return <Navigate to="/app" replace />
+  if (user) return <Navigate to={user.role === 'admin' ? '/app' : '/app/inbox'} replace />
   const submit = async (e) => {
     e.preventDefault(); setErr(null); setBusy(true)
-    try { await login(email.trim(), password); nav('/app') } catch (x) { setErr(x.message) } finally { setBusy(false) }
+    try { const u = await login(email.trim(), password); nav(u.role === 'admin' ? '/app' : '/app/inbox') } catch (x) { setErr(x.message) } finally { setBusy(false) }
   }
   return (
     <div className="min-h-dvh grid md:grid-cols-2">
-      <div className="bg-pine text-paper p-8 md:p-14 flex flex-col justify-between gap-10">
+      <div className="bg-chrome text-on-chrome p-8 md:p-14 flex flex-col justify-between gap-10">
         <Logo light />
         <div>
           <h1 className="text-4xl md:text-5xl font-bold leading-[1.05] max-w-md">Every enquiry answered in minutes, every visit on the calendar.</h1>
-          <p className="mt-4 text-paper/75 max-w-sm">Sign in to see which leads need you, what each buyer asked, and which site visits are coming up.</p>
+          <p className="mt-4 text-on-chrome/75 max-w-sm">Sign in to see which leads need you, what each buyer asked, and which site visits are coming up.</p>
         </div>
-        <p className="text-sm text-paper/60 hidden md:block">Demo workspace with sample data only.</p>
+        <p className="text-sm text-on-chrome/60 hidden md:block">Demo workspace with sample data only.</p>
       </div>
       <div className="p-6 md:p-14 flex items-center">
         <form onSubmit={submit} className="w-full max-w-sm mx-auto flex flex-col gap-4" noValidate>
@@ -41,7 +41,7 @@ export default function Login() {
           <div className="rounded-lg border border-dashed border-line p-3 text-sm">
             <p className="font-medium mb-2">Demo accounts</p>
             <div className="flex flex-wrap gap-2">
-              {DEMO.map((d) => <button type="button" key={d.email} onClick={() => { setEmail(d.email); setPassword('Visitly@Demo1') }} className="rounded-full bg-marigold-soft px-3 py-1.5 text-xs font-medium hover:bg-marigold cursor-pointer">{d.label}</button>)}
+              {DEMO.map((d) => <button type="button" key={d.email} onClick={() => { setEmail(d.email); setPassword('Visitly@Demo1') }} className="rounded-full bg-marigold-soft px-3 py-1.5 text-xs font-medium hover:bg-marigold hover:text-ink cursor-pointer">{d.label}</button>)}
             </div>
             <p className="text-xs text-moss mt-2">Tap one to fill the form. Demo password: Visitly@Demo1</p>
           </div>
